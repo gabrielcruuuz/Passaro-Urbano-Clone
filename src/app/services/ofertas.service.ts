@@ -55,8 +55,10 @@ export class OfertasService {
     }
 
     public pesquisaOferta(termoDaPesquisa: string): Observable<Oferta[]>{
-        return this.http.get(`${URL_API_OFERTA}?descricao_oferta_like=${termoDaPesquisa}`)
+        let response = this.http.get(`${URL_API_OFERTA}?descricao_oferta_like=${termoDaPesquisa}`)
         .pipe(retry(10))
         .pipe(map((response: any) => response.json()));
+
+        return response;
     }
 }

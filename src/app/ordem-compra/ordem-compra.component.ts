@@ -1,71 +1,76 @@
 import { Component, OnInit } from '@angular/core';
+import { OrdemCompraService } from '../services/ordem-compra.service'
+import { CarrinhoService} from '../services/carrinho.service';
+
+import { Pedido } from '../shared/pedido.model'
+import { ItemCarrinho } from '../shared/item-carrinho.model';
+import { FormGroup, FormControl,  Validators} from '@angular/forms';
 
 @Component({
   selector: 'app-ordem-compra',
   templateUrl: './ordem-compra.component.html',
-  styleUrls: ['./ordem-compra.component.css']
+  styleUrls: ['./ordem-compra.component.css'],
+  providers: [ OrdemCompraService ]
 })
 export class OrdemCompraComponent implements OnInit {
 
-  public endereco: string = '';
-  public numero: string = '';
-  public complemento: string = '';
-  public formaPagamento: string = '';
+  // utilizando formularios reativos
+  // construindo as validações com validators
+  public formulario: FormGroup = new FormGroup({
+    'endereco': new FormControl(null, [ Validators.required, Validators.minLength(3), Validators.maxLength(120) ])
+    ,'numero': new FormControl(null, [ Validators.required, Validators.minLength(1) ] )
+    ,'complemento': new FormControl(null)
+    ,'formaPagamento': new FormControl(null, [ Validators.required ])
+  });
 
-  // validacao
-  public enderecoValido: boolean;
-  public numeroValido: boolean;
-  public complementoValido: boolean;
-  public formaPagamentoValido: boolean;
+  public idPedidoCompra: number = undefined;
+  public itensCarrinho: ItemCarrinho[] = [];
 
-  constructor() { }
+  constructor(private ordemCompraService: OrdemCompraService,
+              public carrinhoService: CarrinhoService) { }
 
-  ngOnInit(): void {
+  ngOnInit() {
+    this.itensCarrinho = this.carrinhoService.ExibirItens();
   }
 
-  public AtualizaEndereco(endereco: string){
-    this.endereco = endereco;
+  public ConfirmarCompra(): void {
 
-    if(this.endereco.length > 3){
-      this.enderecoValido = true;
+    // FEEDBACK VISUAL APOS O CLICK DO BOTÃO
+    if(this.formulario.status === 'INVALID'){
+      // pego todos os inputs formControl e marco como tocado
+      // para serem aplicados os feedbacks visuais
+      this.formulario.markAllAsTouched();
     }
     else{
-      this.enderecoValido = false;
+
+      if(this.carrinhoService.ExibirItens().length === 0)
+      {
+        alert('você não selecionou nenhum item!!');
+      }
+
+      else{
+        let valoresFormulario = this.formulario.value;
+        let listaItensCarrinho = this.carrinhoService.ExibirItens();
+
+        let pedido: Pedido = new Pedido(
+          valoresFormulario.endereco,
+          valoresFormulario.numero,
+          valoresFormulario.complemento,
+          valoresFormulario.formaPagamento,
+          listaItensCarrinho
+        );
+  
+        this.ordemCompraService.efetivarCompra(pedido)
+        .subscribe((pedidoSucesso: Pedido) => {
+          this.idPedidoCompra = pedidoSucesso.id;
+          this.carrinhoService.LimparCarrinho();
+        });
+      }
+
     }
   }
 
-  public AtualizaNumero(numero: string){
-    this.numero = numero;
-
-    if(this.numero.length > 1){
-      this.numeroValido = true;
-    }
-    else{
-      this.numeroValido = false;
-    }
-
+  public AlterarQuantidadeItem(item :ItemCarrinho, operador: string): void{
+    this.carrinhoService.AlterarQuantidade(item, operador);
   }
-
-  public AtualizaComplemento(complemento: string){
-    this.complemento = complemento;
-
-    if(this.complemento.length > 0){
-      this.complementoValido = true;
-    }
-    else{
-      this.complementoValido = false;
-    }
-  }
-
-  public AtualizaFormaPagamento(formaPagamento: string){
-    this.formaPagamento = formaPagamento;
-
-    if(this.formaPagamento.toLocaleLowerCase() !== 'selecione uma opção'){
-          this.formaPagamentoValido = true;
-    }
-    else{
-      this.formaPagamentoValido = false;
-    }
-  }
-
 }

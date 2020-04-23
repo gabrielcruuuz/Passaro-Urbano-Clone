@@ -3,18 +3,20 @@ import { ActivatedRoute } from '@angular/router';
 
 import { Oferta } from '../shared/oferta.model';
 import { OfertasService } from '../services/ofertas.service';
+import { CarrinhoService} from '../services/carrinho.service';
 
 @Component({
   selector: 'app-oferta',
   templateUrl: './oferta.component.html',
   styleUrls: ['./oferta.component.css'],
-  providers: [OfertasService]
+  providers: [ OfertasService ]
 })
 export class OfertaComponent implements OnInit {
 
   // resgatando valores passado na uri por parametro
   constructor(private route: ActivatedRoute, 
-              private ofertasService:OfertasService) {}  
+              private ofertasService:OfertasService,
+              private carrinhoService: CarrinhoService) {}  
 
   public oferta: Oferta;
   public abaInicialAtiva: boolean;
@@ -34,6 +36,13 @@ export class OfertaComponent implements OnInit {
 
       this.abaInicialAtiva = true;
     });
+  }
+
+  public AdicionarItemCarrinho(): void{
+    if(this.oferta !== null)
+    {
+      this.carrinhoService.IncluirItem(this.oferta);
+    }
   }
 
   DesabilitaAbaInicial(): void {
